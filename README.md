@@ -14,6 +14,11 @@
   GDScript · arte e áudio 100% gerados por código · Windows · PT-BR / EN
 </p>
 
+<p align="center">
+  <b>Criado por <a href="https://github.com/EduBraga7">Eduardo Braga</a></b><br>
+  🎮 <b>Jogue agora no itch.io:</b> <a href="https://edubraga7.itch.io/capivara-caos"><b>edubraga7.itch.io/capivara-caos</b></a>
+</p>
+
 Você é uma capivara chill com uma laranja na cabeça tentando relaxar no Pantanal enquanto hordas de mosquitos,
 baratas voadoras, ratos, sapos, gambás, um jacaré rabugento, uma onça e uma **sucuri gigante** tentam te atrapalhar.
 Você só se mexe: as armas atiram sozinhas. Sobreviva **10 minutos** e derrote a Sucuri.
@@ -53,6 +58,7 @@ o áudio é sintetizado (numpy rodando dentro do Python embutido do Blender). Ze
 
 | Opção | O que fazer |
 |---|---|
+| **No navegador / itch.io** | Jogue direto no navegador ou baixe a versão para Windows na página oficial: [edubraga7.itch.io/capivara-caos](https://edubraga7.itch.io/capivara-caos). |
 | **Pelo Godot instalado** | Dois cliques em `Jogar.bat` (procura o Godot em `C:\Godot`, no `PATH` ou na variável `GODOT_EXE`). Na primeira vez ele importa os recursos sozinho. |
 | **Pelo editor** | Abra a pasta no Godot 4.7 e aperte **F5** (ou use `Editar no Godot.bat`). |
 | **Pacote portátil** | Veja [Exportar](#-exportar): gera `CapivaraCaos.exe` + `.pck` que rodam sem Godot instalado. |
@@ -157,7 +163,11 @@ copy C:\Godot\Godot_v4.7.2-stable_win64.exe build\CapivaraCaos\CapivaraCaos.exe
 ```
 A pasta `build/` **não é versionada** (o `.exe` tem ~170 MB). Compacte-a e publique o `.zip` em [*Releases*](https://github.com/EduBraga7/capivara-caos/releases).
 
-## 🙌 Créditos
+## 🙌 Autor e Créditos
 
-Feito com [Godot Engine](https://godotengine.org) (MIT). A fonte é a padrão do Godot (Open Sans, OFL).
-Arte, código, músicas e efeitos são originais, gerados proceduralmente.
+- **Desenvolvimento, Arte, Código e Áudio:** **Eduardo Braga**
+  - **Página oficial no itch.io:** [https://edubraga7.itch.io/capivara-caos](https://edubraga7.itch.io/capivara-caos)
+  - **GitHub:** [@EduBraga7](https://github.com/EduBraga7)
+- **Engine:** [Godot Engine](https://godotengine.org) (MIT)
+- **Fonte:** Padrão do Godot (Open Sans, OFL)
+- Arte vetorial, código, músicas e efeitos são 100% originais, gerados proceduralmente por código.

@@ -19,6 +19,7 @@ var next_idx := 0
 var lp_sfx := 0
 var lp_music := 0
 var _fade: Tween
+var _interacted := false
 
 const MIN_GAP_MS := {"hit": 45, "kill": 30, "gem": 20, "zap": 60, "pop": 25, "swish": 80, "tweet": 90, "stink": 120, "thud": 70, "coin": 40}
 
@@ -27,11 +28,13 @@ func _ready() -> void:
 	_make_buses()
 	for i in POOL:
 		var p := AudioStreamPlayer.new()
+		p.playback_type = AudioServer.PLAYBACK_TYPE_STREAM
 		p.bus = "SFX"
 		add_child(p)
 		players.append(p)
 	for i in 2:
 		var m := AudioStreamPlayer.new()
+		m.playback_type = AudioServer.PLAYBACK_TYPE_STREAM
 		m.bus = "Music"
 		add_child(m)
 		music_players.append(m)
@@ -48,6 +51,13 @@ func _ready() -> void:
 			ms.loop_end = int(round(ms.get_length() * ms.mix_rate))
 			music_streams[n] = ms
 	apply_volumes()
+
+func _input(event: InputEvent) -> void:
+	if not _interacted:
+		if (event is InputEventMouseButton and event.pressed) or (event is InputEventKey and event.pressed):
+			_interacted = true
+			if cur_music != "" and music_players.size() > 0 and not music_players[0].playing:
+				music_players[0].play()
 
 func _make_buses() -> void:
 	for bus_name in ["Music", "SFX"]:

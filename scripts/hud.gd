@@ -900,3 +900,5 @@ func _paint_end(c: Control, vs: Vector2) -> void:
 		Ui.ctext(c, Vector2(vs.x * 0.5, ry + 4 * 44.0 + 22), G.T("record"), int(28 * s), Color("ff5fd2"), 6)
 	for i in btns.size():
 		_paint_button(c, btns[i], i)
+	if win and modal_t > 0.8:
+		Ui.ctext(c, Vector2(vs.x * 0.5, pr.position.y + pr.size.y - 12), G.L(["Feito por Eduardo Braga  •  edubraga7.itch.io/capivara-caos", "Made by Eduardo Braga  •  edubraga7.itch.io/capivara-caos"]), 13, Color(1, 1, 1, 0.65), 3, false)

@@ -2,6 +2,14 @@
 
 > Números de mercado abaixo são regras de bolso da comunidade indie, não garantias. Confira taxas e regras atuais no Steamworks antes de decidir.
 
+## 0. Dados de mercado (pesquisa de 02/11/2026)
+
+- A Steam oficializou a tag **Bullet Heaven** em maio de 2026. Um rastreador conta 103 lançamentos com a tag em 2025 e 329 só em 2026 (parte do salto é relabeling), mais 753 páginas ainda não lançadas. **A concorrência é pesada e crescente.**
+- Mesmo assim, 13,1% dos jogos do nicho (lançados jan/2024–jun/2025) chegaram a 1.000 reviews, 3,1× a média da Steam. O gênero ainda converte bem, mas **para quem se destaca**.
+- Casos de sucesso (Halls of Torment ~1M de cópias, Brotato) tinham **identidade própria e metagame profundo**, não só o loop copiado.
+- Palestra de Chris Zukowski (GDC 2026), via relato secundário: wishlist não vira venda sozinha, **descontos puxam as compras**. A regra de ~7k wishlists para "Popular Upcoming" é folclore da comunidade, não dado oficial.
+- **Não achei** dado confiável de receita mediana. Trate qualquer "10k wishlists = US$30–80k" como não verificado.
+
 ## 1. Onde o jogo está hoje
 
 **Já tem (muito bom para um projeto solo):**

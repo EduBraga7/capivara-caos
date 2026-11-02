@@ -94,6 +94,7 @@ func _layout() -> void:
 			_add(G.T("achievements"), Rect2(bx, by + 130, 380, 48), _go.bind(P.ACHIEVEMENTS))
 			_add(G.T("options"), Rect2(bx, by + 188, 380, 48), _go.bind(P.OPTIONS))
 			_add(G.T("quit"), Rect2(bx, by + 246, 380, 46), func(): quit_game.emit())
+			_add(G.L(["Feito por Eduardo Braga  •  itch.io", "Made by Eduardo Braga  •  itch.io"]), Rect2(bx, by + 300, 380, 38), _open_itch, 2)
 			var lb := _add("PT / EN", Rect2(vs.x - 150, vs.y - 64, 120, 40), _toggle_lang)
 			lb.text = "PT  •  EN" if G.lang == 0 else "EN  •  PT"
 		P.SELECT:
@@ -419,9 +420,12 @@ func _activate(i: int) -> void:
 		return
 	var b := btns[i]
 	if b.cb.is_valid() and b.enabled:
-		if b.kind == 1 and page != P.OPTIONS:
+		if (b.kind == 1 or b.kind == 2) and page != P.OPTIONS:
 			Sfx.play("ui_click")
 		b.cb.call()
+
+func _open_itch() -> void:
+	OS.shell_open("https://edubraga7.itch.io/capivara-caos")
 
 func _nav(dir: Vector2) -> void:
 	if btns.is_empty():
@@ -489,7 +493,9 @@ func _paint_main(c: Control, vs: Vector2) -> void:
 	Ui.ctext(c, Vector2(280, 240), G.T("tagline"), 20, Color("ffe9b8"), 5)
 	for i in btns.size():
 		var b := btns[i]
-		if b.rect.size.x > 200:
+		if b.kind == 2:
+			_paint_credit_btn(c, b)
+		elif b.rect.size.x > 200:
 			_paint_btn(c, b)
 		else:
 			_paint_small_btn(c, b)
@@ -499,7 +505,8 @@ func _paint_main(c: Control, vs: Vector2) -> void:
 	Ui.text(c, Vector2(24, vs.y - 22), rec, 16, Color(1, 1, 1, 0.85), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 4, false)
 	var nav_hint := "%s %s   •   %s %s" % [G.p_accept(), G.T("select"), G.p_nav(), G.L(["Navegar", "Navigate"])]
 	Ui.text(c, Vector2(vs.x - 360, vs.y - 22), nav_hint, 15, Color(1, 1, 1, 0.65), HORIZONTAL_ALIGNMENT_RIGHT, 340.0, 3, false)
-	Ui.text(c, Vector2(vs.x - 140, vs.y - 74), "v1.1", 14, Color(1, 1, 1, 0.4), HORIZONTAL_ALIGNMENT_RIGHT, 120.0, 3, false)
+	var ver := "v1.1  •  %s" % G.L(["por Eduardo Braga", "by Eduardo Braga"])
+	Ui.text(c, Vector2(vs.x - 280, vs.y - 74), ver, 14, Color(1, 1, 1, 0.45), HORIZONTAL_ALIGNMENT_RIGHT, 260.0, 3, false)
 	_paint_coins(c, vs)
 
 func _paint_btn(c: Control, b: Btn) -> void:
@@ -541,6 +548,21 @@ func _paint_small_btn(c: Control, b: Btn) -> void:
 	var rr := Rect2(-b.rect.size * 0.5, b.rect.size)
 	Ui.panel(c, rr, Color(0.1, 0.16, 0.28, 0.9).lerp(Color(0.2, 0.3, 0.5, 0.95), b.hov), Color("7a8aa8"), 12, 2, 4)
 	Ui.text(c, Vector2(rr.position.x, rr.position.y + rr.size.y * 0.5 + 6), b.text, 16, Color("e8f0ff"), HORIZONTAL_ALIGNMENT_CENTER, rr.size.x, 0)
+	c.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+func _paint_credit_btn(c: Control, b: Btn) -> void:
+	var sc := 1.0 + 0.04 * b.hov
+	var center := b.rect.get_center()
+	c.draw_set_transform(center, 0.0, Vector2(sc, sc))
+	var rr := Rect2(-b.rect.size * 0.5, b.rect.size)
+	var bg := Color(0.08, 0.14, 0.25, 0.88).lerp(Color(0.14, 0.22, 0.38, 0.96), b.hov)
+	var border := Color(0.65, 0.55, 0.3, 0.6)
+	if b.hov > 0.05:
+		var pulse := 0.5 + 0.5 * sin(clock * 8.0)
+		border = Color("ffd43b").lerp(Color.WHITE, pulse * 0.5)
+	Ui.panel(c, rr, bg, border, 12, 2 if b.hov <= 0.05 else 3, 4 + int(4 * b.hov))
+	var tc := Color("fff3dc").lerp(Color("ffe066"), b.hov)
+	Ui.text(c, Vector2(rr.position.x, rr.position.y + rr.size.y * 0.5 + 6), b.text, 15, tc, HORIZONTAL_ALIGNMENT_CENTER, rr.size.x, 2 if b.hov > 0.05 else 0)
 	c.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 func _paint_title(c: Control, vs: Vector2, s: String, sub: String = "") -> void:
@@ -649,6 +671,8 @@ func _paint_options(c: Control, vs: Vector2) -> void:
 	_paint_title(c, vs, G.T("options_title"))
 	for i in btns.size():
 		_paint_btn(c, btns[i])
+	Ui.ctext(c, Vector2(vs.x * 0.5, vs.y - 48), G.L(["Capivara Caos — Desenvolvido por Eduardo Braga", "Capybara Chaos — Developed by Eduardo Braga"]), 16, Color("fff3dc"), 4)
+	Ui.ctext(c, Vector2(vs.x * 0.5, vs.y - 24), "edubraga7.itch.io/capivara-caos", 14, Color("7be04a"), 3)
 
 func _paint_achievements(c: Control, vs: Vector2) -> void:
 	var unlocked_count := 0

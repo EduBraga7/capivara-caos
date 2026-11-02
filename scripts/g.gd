@@ -130,7 +130,7 @@ const TR := {
 	"wins": ["Vitórias", "Wins"],
 	"boss_warn": ["CHEFÃO!", "BOSS!"],
 	"stat_hint": ["Passe o mouse ou use as setas", "Hover or use the arrows"],
-	"share_text": ["🦫 Capivara Caos: sobrevivi %s, derrubei %s bichos e cheguei ao nível %d!%s Consegue me superar?", "🦫 Capybara Chaos: I survived %s, beat %s critters and reached level %d!%s Can you beat me?"],
+	"share_text": ["🦫 Capivara Caos: sobrevivi %s, derrubei %s bichos e cheguei ao nível %d!%s Consegue me superar? Jogue em: https://edubraga7.itch.io/capivara-caos", "🦫 Capybara Chaos: I survived %s, beat %s critters and reached level %d!%s Can you beat me? Play at: https://edubraga7.itch.io/capivara-caos"],
 	"share_win": [" VENCI A SUCURI!", " I BEAT THE ANACONDA!"],
 	"weapons": ["Armas", "Weapons"],
 	"passives": ["Itens", "Items"],
