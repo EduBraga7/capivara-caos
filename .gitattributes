@@ -1,0 +1,9 @@
+# Normaliza os finais de linha (padrão recomendado para projetos Godot)
+* text=auto eol=lf
+
+# Scripts do Windows precisam de CRLF
+*.bat text eol=crlf
+
+# Binários
+*.png binary
+*.wav binary

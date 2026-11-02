@@ -1,0 +1,19 @@
+# Godot 4+ (cache de importação; o Godot recria sozinho)
+.godot/
+/android/
+
+# Pacotes gerados: o .exe tem ~170 MB (o GitHub recusa arquivos > 100 MB).
+# Compacte a pasta e publique o .zip em Releases.
+build/
+
+# Capturas brutas usadas para montar os prints do README
+docs/screenshots/_raw/
+
+# Sistema / editores
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.tmp
+
+# Copia duplicada criada ao mover a sessao (pode apagar)
+/capivara-caos/
