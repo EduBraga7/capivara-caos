@@ -1,0 +1,11 @@
+﻿{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web-build",
+      "runtimeExecutable": "C:\\Users\\du-xb\\.gemini\\antigravity\\scratch\\nodejs\\node.exe",
+      "runtimeArgs": ["C:\\Users\\du-xb\\AppData\\Local\\Temp\\claude\\C--Users-du-xb-Documents-games-capivara-caos\\a34c465f-be05-4ff7-9fa2-71afb39d0674\\scratchpad\\serve.js", "C:\\Users\\du-xb\\Documents\\games\\capivara-caos\\build\\web"],
+      "port": 8765
+    }
+  ]
+}
