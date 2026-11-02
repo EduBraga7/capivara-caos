@@ -33,6 +33,7 @@ var move_input := Vector2.ZERO
 var idle_t: float = 0.0
 var dead: bool = false
 var afterimage_t: float = 0.0
+var water_healed: float = 0.0
 
 # --- stats written by Run.recalc_stats()
 var might: float = 1.0
@@ -115,7 +116,12 @@ func update(dt: float, input: Vector2) -> void:
 	# regen (water doubles as a spa)
 	var rg := regen + (1.6 if in_water else 0.0)
 	if rg > 0.0 and hp < max_hp:
-		hp = minf(max_hp, hp + rg * dt)
+		var gained := minf(max_hp - hp, rg * dt)
+		hp += gained
+		if in_water and not run.demo:
+			water_healed += gained
+			if water_healed >= 40.0:
+				G.unlock_achievement("spa_day")
 	# blink
 	blink_timer -= dt
 	if blink_timer <= 0.0:

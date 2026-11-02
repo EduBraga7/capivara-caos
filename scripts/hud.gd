@@ -2,7 +2,7 @@ class_name Hud extends CanvasLayer
 ## In-run interface: bars, timers, announcements and every modal
 ## (level-up cards, chest slot machine, pause, game over, victory).
 
-enum M { NONE, LEVELUP, CHEST, PAUSE, OVER, WIN }
+enum M { NONE, LEVELUP, CHEST, PAUSE, OPTIONS, OVER, WIN }
 
 class Btn:
 	var rect := Rect2()
@@ -53,6 +53,7 @@ var chest_revealed: bool = false
 var levelup_no: int = 1
 var clock: float = 0.0
 var clean: bool = false          # screenshots: hide hints and the BOT tag
+var dragging_slider: String = ""
 
 func setup(r: Run) -> void:
 	run = r
@@ -64,6 +65,7 @@ func setup(r: Run) -> void:
 	canvas.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	add_child(canvas)
 	canvas.resized.connect(func(): if modal != M.NONE: _layout())
+	G.language_changed.connect(func(): if modal != M.NONE: _layout())
 	if run.demo:
 		canvas.visible = false
 	else:
@@ -91,6 +93,7 @@ func banner(title: String, sub: String, col: Color) -> void:
 	banner_t = 2.6
 
 func _open(m: int) -> void:
+	dragging_slider = ""
 	modal = m
 	modal_t = 0.0
 	focus = 0
@@ -137,6 +140,7 @@ func show_win(res: Dictionary) -> void:
 		print("[bot] WIN t=%s level=%d kills=%d coins=%d" % [G.fmt_time(res["time"]), res["level"], res["kills"], res["coins"]])
 
 func close_modal() -> void:
+	dragging_slider = ""
 	modal = M.NONE
 	btns.clear()
 
@@ -182,14 +186,35 @@ func _layout() -> void:
 			_add_btn(G.T("take"), Rect2(vs.x * 0.5 - 120.0, y02 + ch2 + 34.0, 240.0, 58.0), _take_chest, 1, false)
 			focus = btns.size() - 1
 		M.PAUSE:
+			var pw := 640.0
+			var ph := 480.0
+			var ptop := vs.y * 0.5 - ph * 0.5
 			var bx := vs.x * 0.5 - 150.0
-			var by := vs.y * 0.5 + 40.0
+			var by := ptop + 242.0
 			_add_btn(G.T("resume"), Rect2(bx, by, 300, 52), _resume)
-			var bm := _add_btn("%s  %d%%" % [G.T("music"), int(round(float(G.data["settings"]["music"]) * 100.0))], Rect2(bx, by + 64, 300, 46), _vol.bind("music", 0.1))
-			bm.adjust = _vol_adjust.bind("music")
-			var bs := _add_btn("%s  %d%%" % [G.T("sfx"), int(round(float(G.data["settings"]["sfx"]) * 100.0))], Rect2(bx, by + 118, 300, 46), _vol.bind("sfx", 0.1))
-			bs.adjust = _vol_adjust.bind("sfx")
-			_add_btn(G.T("menu"), Rect2(bx, by + 176, 300, 52), _quit_menu)
+			_add_btn(G.T("options"), Rect2(bx, by + 64, 300, 50), _open_options)
+			_add_btn(G.T("menu"), Rect2(bx, by + 126, 300, 48), _quit_menu)
+		M.OPTIONS:
+			var pw2 := 580.0
+			var ph2 := 570.0
+			var ptop2 := vs.y * 0.5 - ph2 * 0.5
+			var bx2 := vs.x * 0.5 - 250.0
+			var by2 := ptop2 + 74.0
+			var rows := [
+				["master", _opt_text("master"), "vol"],
+				["music", _opt_text("music"), "vol"],
+				["sfx", _opt_text("sfx"), "vol"],
+				["shake", _opt_text("shake"), "shake"],
+				["numbers", _opt_text("numbers"), "numbers"],
+				["fullscreen", _opt_text("fullscreen"), "fullscreen"],
+				["flashes", _opt_text("flashes"), "flashes"],
+				["language", _opt_text("language"), "language"],
+			]
+			for i in rows.size():
+				var ob := _add_btn(rows[i][1], Rect2(bx2, by2 + i * 48.0, 500, 42), _opt_click.bind(rows[i][0], rows[i][2]))
+				ob.adjust = _opt_adjust.bind(rows[i][0], rows[i][2])
+				ob.data = rows[i][0]
+			_add_btn(G.T("back"), Rect2(vs.x * 0.5 - 110, by2 + rows.size() * 48.0 + 14.0, 220, 48), _back_to_pause)
 		M.OVER, M.WIN:
 			var bx2 := vs.x * 0.5 - 150.0
 			var is_win := modal == M.WIN
@@ -241,21 +266,97 @@ func _endless() -> void:
 	close_modal()
 	run.continue_endless()
 
-func _vol(key: String, step: float) -> void:
-	var v := float(G.data["settings"][key]) + step
-	if v > 1.001:
-		v = 0.0
-	G.set_setting(key, snappedf(v, 0.1))
-	Sfx.apply_volumes()
+func _open_options() -> void:
 	Sfx.play("ui_click")
+	_open(M.OPTIONS)
 	_layout()
 
-func _vol_adjust(dir: int, key: String) -> void:
-	var v := clampf(float(G.data["settings"][key]) + 0.1 * dir, 0.0, 1.0)
-	G.set_setting(key, snappedf(v, 0.1))
-	Sfx.apply_volumes()
-	Sfx.play("ui_hover")
+func _back_to_pause() -> void:
+	Sfx.play("ui_click")
+	_open(M.PAUSE)
+	focus = 1
 	_layout()
+
+func _opt_text(key: String) -> String:
+	var s: Dictionary = G.data["settings"]
+	match key:
+		"master", "music", "sfx":
+			return G.T(key)
+		"shake":
+			return "%s   %s" % [G.T("shake"), G.T("shake%d" % int(s["shake"]))]
+		"numbers":
+			return "%s   %s" % [G.T("numbers"), G.T("on") if bool(s["numbers"]) else G.T("off")]
+		"fullscreen":
+			return "%s   %s" % [G.T("fullscreen"), G.T("on") if bool(s["fullscreen"]) else G.T("off")]
+		"flashes":
+			return "%s   %s" % [G.T("flashes"), G.T("on") if bool(s["flashes"]) else G.T("off")]
+		"language":
+			return "%s   %s" % [G.T("language"), G.T("lang_name")]
+	return key
+
+func _get_slider_btn(key: String) -> Btn:
+	for b in btns:
+		if b.data != null and str(b.data) == key:
+			return b
+	return null
+
+func _calc_slider_ratio(b: Btn, pos: Vector2) -> float:
+	var sc := 1.0 + 0.04 * b.hov
+	var center := b.rect.get_center()
+	var local_x := (pos.x - center.x) / sc
+	var sr_x := b.rect.size.x * 0.5 - 220.0
+	var track_x0 := sr_x + 3.0
+	var track_len := 140.0 - 6.0
+	return clampf((local_x - track_x0) / track_len, 0.0, 1.0)
+
+func _handle_slider_click(b: Btn, pos: Vector2) -> void:
+	var sc := 1.0 + 0.04 * b.hov
+	var center := b.rect.get_center()
+	var local_x := (pos.x - center.x) / sc
+	var sr_x := b.rect.size.x * 0.5 - 220.0
+	var key := str(b.data)
+	if local_x >= sr_x - 6.0 and local_x <= sr_x + 146.0:
+		var ratio := _calc_slider_ratio(b, pos)
+		var v := clampf(snappedf(ratio, 0.05), 0.0, 1.0)
+		G.set_setting(key, v)
+		Sfx.apply_volumes()
+		dragging_slider = key
+		Sfx.play("ui_hover", -6.0)
+		canvas.queue_redraw()
+	elif local_x > sr_x + 146.0:
+		_opt_adjust(1, key, "vol")
+	elif local_x >= sr_x - 45.0:
+		_opt_adjust(-1, key, "vol")
+	else:
+		Sfx.play("ui_hover", -10.0)
+
+func _opt_click(key: String, type: String) -> void:
+	_opt_adjust(1, key, type)
+
+func _opt_adjust(dir: int, key: String, type: String) -> void:
+	var s: Dictionary = G.data["settings"]
+	match type:
+		"vol":
+			var v := clampf(float(s[key]) + 0.05 * dir, 0.0, 1.0)
+			G.set_setting(key, snappedf(v, 0.05))
+			Sfx.apply_volumes()
+		"shake":
+			G.set_setting("shake", posmod(int(s["shake"]) + dir, 3))
+		"numbers":
+			G.set_setting("numbers", not bool(s["numbers"]))
+		"fullscreen":
+			G.set_setting("fullscreen", not bool(s["fullscreen"]))
+			G.apply_settings()
+		"flashes":
+			G.set_setting("flashes", not bool(s["flashes"]))
+		"language":
+			G.set_lang(1 - G.lang)
+	Sfx.play("ui_hover", -6.0)
+	G.save()
+	if type != "vol":
+		_layout()
+	else:
+		canvas.queue_redraw()
 
 func _share_text() -> String:
 	var r := result
@@ -304,8 +405,11 @@ func tick(dt: float) -> void:
 		canvas.queue_redraw()
 
 func _hover(dt: float) -> void:
+	if dragging_slider != "" and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		dragging_slider = ""
+		G.save()
 	var mp := canvas.get_local_mouse_position()
-	if mp != last_mouse:
+	if dragging_slider == "" and mp.distance_to(last_mouse) > 2.0:
 		last_mouse = mp
 		for i in btns.size():
 			if btns[i].enabled and btns[i].rect.has_point(mp):
@@ -343,6 +447,8 @@ func _bot_act(dt: float) -> void:
 				_take_chest()
 		M.PAUSE:
 			_resume()
+		M.OPTIONS:
+			_back_to_pause()
 		M.OVER, M.WIN:
 			if G.test_mode:
 				get_tree().quit()
@@ -355,35 +461,73 @@ func on_input(ev: InputEvent) -> void:
 		return
 	var handled := false
 	if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
-		var mp := canvas.get_local_mouse_position()
+		var mp: Vector2 = ev.position
 		for i in btns.size():
 			if btns[i].rect.has_point(mp) and btns[i].enabled:
 				focus = i
-				_activate(i, 0)
+				if modal == M.OPTIONS and btns[i].data != null and str(btns[i].data) in ["master", "music", "sfx"]:
+					_handle_slider_click(btns[i], mp)
+				else:
+					_activate(i, 0)
 				break
 		handled = true
+	elif ev is InputEventMouseMotion:
+		if dragging_slider != "":
+			var b := _get_slider_btn(dragging_slider)
+			if b != null:
+				var ratio := _calc_slider_ratio(b, ev.position)
+				var v := clampf(snappedf(ratio, 0.05), 0.0, 1.0)
+				var old_v := float(G.data["settings"][dragging_slider])
+				if not is_equal_approx(v, old_v):
+					G.set_setting(dragging_slider, v)
+					Sfx.apply_volumes()
+					canvas.queue_redraw()
+			handled = true
+	elif ev is InputEventMouseButton and not ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+		if dragging_slider != "":
+			dragging_slider = ""
+			G.save()
+			canvas.queue_redraw()
+			handled = true
+	elif ev is InputEventMouseButton and ev.pressed:
+		if ev.button_index == MOUSE_BUTTON_WHEEL_UP:
+			var mp: Vector2 = ev.position
+			for i in btns.size():
+				if btns[i].rect.has_point(mp) and btns[i].data != null and str(btns[i].data) in ["master", "music", "sfx"]:
+					_opt_adjust(1, str(btns[i].data), "vol")
+					handled = true
+					break
+		elif ev.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			var mp: Vector2 = ev.position
+			for i in btns.size():
+				if btns[i].rect.has_point(mp) and btns[i].data != null and str(btns[i].data) in ["master", "music", "sfx"]:
+					_opt_adjust(-1, str(btns[i].data), "vol")
+					handled = true
+					break
 	elif ev is InputEventKey and ev.pressed and not ev.echo:
 		if modal == M.LEVELUP and ev.keycode >= KEY_1 and ev.keycode <= KEY_3:
 			var idx: int = ev.keycode - KEY_1
 			if idx < cards.size():
 				_pick_card(idx)
 			handled = true
-		elif ev.is_action_pressed("pause") and modal == M.PAUSE:
-			_resume()
-			handled = true
 		elif ev.is_action_pressed("reroll") and modal == M.LEVELUP and run.rerolls_left > 0:
 			_do_reroll()
 			handled = true
-	if not handled and modal == M.PAUSE and ev is InputEventJoypadButton and ev.is_action_pressed("ui_cancel"):
-		_resume()
-		handled = true
 	if not handled and (ev is InputEventKey or ev is InputEventJoypadButton or ev is InputEventJoypadMotion or ev is InputEventAction):
 		if ev is InputEventJoypadMotion:
 			var now := Time.get_ticks_msec()
 			if now - last_nav_ms < 190:
 				return
 			last_nav_ms = now
-		if ev.is_action_pressed("ui_left") or ev.is_action_pressed("move_left"):
+		var is_esc: bool = (ev is InputEventKey and ev.pressed and not ev.echo and (ev.keycode == KEY_ESCAPE or ev.physical_keycode == KEY_ESCAPE or ev.key_label == KEY_ESCAPE))
+		if ev.is_action_pressed("ui_cancel") or ev.is_action_pressed("pause") or is_esc:
+			if modal == M.PAUSE:
+				_resume()
+				handled = true
+			elif modal == M.OPTIONS:
+				_back_to_pause()
+				handled = true
+		elif ev.is_action_pressed("ui_left") or ev.is_action_pressed("move_left"):
 			_nav(Vector2.LEFT)
 			handled = true
 		elif ev.is_action_pressed("ui_right") or ev.is_action_pressed("move_right"):
@@ -445,6 +589,7 @@ func paint(c: Control) -> void:
 			M.LEVELUP: _paint_levelup(c, vs)
 			M.CHEST: _paint_chest(c, vs)
 			M.PAUSE: _paint_pause(c, vs)
+			M.OPTIONS: _paint_options_modal(c, vs)
 			M.OVER, M.WIN: _paint_end(c, vs)
 	_paint_overlays(c, vs)
 
@@ -535,8 +680,8 @@ func _paint_hud(c: Control, vs: Vector2) -> void:
 	if hint_t > 0.0 and modal == M.NONE and not clean:
 		var ha := clampf(hint_t, 0.0, 1.0)
 		var hy := vs.y - 150.0
-		Ui.ctext(c, Vector2(vs.x * 0.5, hy), G.T("hint_move"), 20, Color(1, 1, 1, ha), 5)
-		Ui.ctext(c, Vector2(vs.x * 0.5, hy + 30), G.T("hint_dash"), 20, Color(1, 1, 1, ha), 5)
+		Ui.ctext(c, Vector2(vs.x * 0.5, hy), G.hint_move_str(), 20, Color(1, 1, 1, ha), 5)
+		Ui.ctext(c, Vector2(vs.x * 0.5, hy + 30), G.hint_dash_str(), 20, Color(1, 1, 1, ha), 5)
 		Ui.ctext(c, Vector2(vs.x * 0.5, hy + 60), G.T("hint_auto"), 18, Color(1.0, 0.85, 0.4, ha), 5)
 	if bot and not clean:
 		Ui.text(c, Vector2(vs.x - 90, vs.y - 12), "BOT", 18, Color("ff5fd2"))
@@ -590,7 +735,8 @@ func _paint_levelup(c: Control, vs: Vector2) -> void:
 		else:
 			_paint_button(c, b, i)
 	if run.rerolls_left > 0:
-		Ui.ctext(c, Vector2(vs.x * 0.5, vs.y * 0.5 + 238 + 54), "R", 14, Color(1, 1, 1, 0.5), 3)
+		var rh := "%s %s  (%d)" % [G.p_reroll(), G.T("reroll"), run.rerolls_left]
+		Ui.ctext(c, Vector2(vs.x * 0.5, vs.y * 0.5 + 238 + 54), rh, 16, Color(1, 1, 1, 0.65), 3)
 
 func _paint_card(c: Control, b: Btn, i: int, info: Dictionary, idx: int, reveal: float) -> void:
 	var k := clampf((modal_t - idx * 0.09) / 0.32, 0.0, 1.0)
@@ -599,10 +745,13 @@ func _paint_card(c: Control, b: Btn, i: int, info: Dictionary, idx: int, reveal:
 	var center := r.get_center() + Vector2(0, off)
 	var sc := (1.0 + 0.055 * b.hov) * clampf(k * 1.4, 0.0, 1.0) * reveal
 	var tag_col: Color = info["tag_col"]
+	if b.hov > 0.05:
+		var pulse := 0.5 + 0.5 * sin(clock * 8.0)
+		tag_col = tag_col.lerp(Color("ffffff"), pulse * 0.5)
 	c.draw_set_transform(center, 0.0, Vector2(sc, sc))
 	var rr := Rect2(-r.size * 0.5, r.size)
 	var bg := Color("17294a").lerp(Color("22407a"), b.hov)
-	Ui.panel(c, rr, bg, tag_col, 18, 3 + int(2 * b.hov), 10)
+	Ui.panel(c, rr, bg, tag_col, 18, 3 + int(3 * b.hov), 10 + int(6 * b.hov))
 	# tag pill
 	var tw := 86.0
 	Ui.panel(c, Rect2(rr.position + Vector2(12, 12), Vector2(tw + 18, 26)), tag_col, tag_col.darkened(0.3), 13, 2, 0)
@@ -618,7 +767,9 @@ func _paint_card(c: Control, b: Btn, i: int, info: Dictionary, idx: int, reveal:
 	if info["hint"] != "":
 		Ui.wrap(c, Vector2(rr.position.x + 10, rr.position.y + rr.size.y - 32), info["hint"], rr.size.x - 20, 13, Color("ffd27a"), 1)
 	if modal == M.LEVELUP:
-		Ui.text(c, Vector2(rr.position.x + rr.size.x - 34, rr.position.y + 32), "[%d]" % (idx + 1), 14, Color(1, 1, 1, 0.55), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 3)
+		var key_hint := "[%d]" % (idx + 1) if not G.is_gamepad else ("(A)" if b.hov > 0.5 else "")
+		if key_hint != "":
+			Ui.text(c, Vector2(rr.position.x + rr.size.x - 38, rr.position.y + 32), key_hint, 14, Color(1, 1, 1, 0.75), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 3)
 	if b.hov > 0.01 and modal == M.LEVELUP:
 		c.draw_arc(Vector2.ZERO, 1.0, 0.0, 0.0, 3, Color.WHITE, 1.0)
 	c.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
@@ -635,9 +786,20 @@ func _paint_button(c: Control, b: Btn, i: int, big: bool = false) -> void:
 		bg = Color("4a5568")
 		border = Color("2a303a")
 		tc = Color("8a94a6")
-	Ui.panel(c, rr, bg, border, 14, 3, 6)
-	Ui.text(c, Vector2(rr.position.x, rr.position.y + rr.size.y * 0.5 + 8), b.text, 22 if not big else 28, tc, HORIZONTAL_ALIGNMENT_CENTER, rr.size.x, 0)
-	if b.adjust.is_valid() and b.hov > 0.1:
+	elif b.hov > 0.05:
+		var pulse := 0.5 + 0.5 * sin(clock * 8.0)
+		border = Color("ffd43b").lerp(Color("ffffff"), pulse * 0.7)
+	Ui.panel(c, rr, bg, border, 14, 3 if b.hov <= 0.05 else 5, 6 + int(4 * b.hov))
+	if b.data != null and str(b.data) in ["master", "music", "sfx"]:
+		Ui.text(c, Vector2(rr.position.x + 24, rr.position.y + rr.size.y * 0.5 + 8), b.text, 20, tc, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 0)
+		var vol: float = float(G.data["settings"][str(b.data)])
+		var sr := Rect2(rr.position.x + rr.size.x - 220, rr.position.y + rr.size.y * 0.5 - 7, 140, 14)
+		var is_active := dragging_slider == str(b.data)
+		Ui.slider(c, sr, vol, Color("0b4a44") if not b.hov > 0.05 else Color("06302c"), is_active, b.hov)
+		Ui.text(c, Vector2(rr.position.x + rr.size.x - 70, rr.position.y + rr.size.y * 0.5 + 8), "%d%%" % int(round(vol * 100.0)), 18, tc, HORIZONTAL_ALIGNMENT_RIGHT, 60.0, 0)
+	else:
+		Ui.text(c, Vector2(rr.position.x, rr.position.y + rr.size.y * 0.5 + 8), b.text, 22 if not big else 28, tc, HORIZONTAL_ALIGNMENT_CENTER, rr.size.x, 0)
+	if b.adjust.is_valid() and b.hov > 0.1 and not (b.data != null and str(b.data) in ["master", "music", "sfx"]):
 		Ui.text(c, Vector2(rr.position.x + 12, rr.position.y + rr.size.y * 0.5 + 8), "◀", 18, tc, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 0)
 		Ui.text(c, Vector2(rr.position.x, rr.position.y + rr.size.y * 0.5 + 8), "▶", 18, tc, HORIZONTAL_ALIGNMENT_RIGHT, rr.size.x - 12, 0)
 	c.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
@@ -671,23 +833,36 @@ func _paint_chest(c: Control, vs: Vector2) -> void:
 
 func _paint_pause(c: Control, vs: Vector2) -> void:
 	var pw := 640.0
-	var pr := Rect2(vs.x * 0.5 - pw * 0.5, vs.y * 0.5 - 230, pw, 500)
+	var ph := 480.0
+	var pr := Rect2(vs.x * 0.5 - pw * 0.5, vs.y * 0.5 - ph * 0.5, pw, ph)
 	Ui.panel(c, pr, Color("14213d"), Color("ffb02e"), 22, 4, 14)
-	Ui.ctext(c, Vector2(vs.x * 0.5, pr.position.y + 50), G.T("paused"), 54, Color("ffd43b"), 9)
+	Ui.ctext(c, Vector2(vs.x * 0.5, pr.position.y + 46), G.T("paused"), 50, Color("ffd43b"), 9)
 	# current build
 	var x := vs.x * 0.5 - (run.weapons.size() * 46.0) * 0.5
 	for w in run.weapons:
-		_slot(c, Vector2(x, pr.position.y + 98), w.icon(), w.level, w.evolved, true)
+		_slot(c, Vector2(x, pr.position.y + 92), w.icon(), w.level, w.evolved, true)
 		x += 46.0
 	x = vs.x * 0.5 - (run.passives.size() * 42.0) * 0.5
 	for pid in run.passives:
-		_slot(c, Vector2(x, pr.position.y + 150), Defs.PASSIVES[pid]["icon"], int(run.passives[pid]), false, false)
+		_slot(c, Vector2(x, pr.position.y + 142), Defs.PASSIVES[pid]["icon"], int(run.passives[pid]), false, false)
 		x += 42.0
 	var summary := "%s %s   •   %s %s   •   %s %s" % [G.T("survived"), G.fmt_time(run.t), G.T("kills"), G.fmt_num(run.kills), G.T("coins"), G.fmt_num(int(run.coins_run))]
-	Ui.ctext(c, Vector2(vs.x * 0.5, pr.position.y + 232), summary, 18, Color("c8d8f0"), 4, false)
-	Ui.ctext(c, Vector2(vs.x * 0.5, pr.position.y + 262), G.T("hint_dash"), 15, Color(1, 1, 1, 0.5), 3, false)
+	Ui.ctext(c, Vector2(vs.x * 0.5, pr.position.y + 212), summary, 18, Color("c8d8f0"), 4, false)
 	for i in btns.size():
 		_paint_button(c, btns[i], i)
+	var hint := "%s   •   %s %s" % [G.hint_dash_str(), G.p_cancel(), G.T("resume")]
+	Ui.ctext(c, Vector2(vs.x * 0.5, pr.position.y + pr.size.y - 24), hint, 14, Color(1, 1, 1, 0.45), 2, false)
+
+func _paint_options_modal(c: Control, vs: Vector2) -> void:
+	var pw := 580.0
+	var ph := 570.0
+	var pr := Rect2(vs.x * 0.5 - pw * 0.5, vs.y * 0.5 - ph * 0.5, pw, ph)
+	Ui.panel(c, pr, Color("14213d"), Color("ffb02e"), 22, 4, 14)
+	Ui.ctext(c, Vector2(vs.x * 0.5, pr.position.y + 44), G.T("options"), 42, Color("ffd43b"), 8)
+	for i in btns.size():
+		_paint_button(c, btns[i], i)
+	var hint := "%s %s" % [G.p_cancel(), G.T("back")]
+	Ui.ctext(c, Vector2(vs.x * 0.5, pr.position.y + pr.size.y - 18), hint, 14, Color(1, 1, 1, 0.45), 2, false)
 
 func _paint_end(c: Control, vs: Vector2) -> void:
 	var win := modal == M.WIN

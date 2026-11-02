@@ -46,11 +46,30 @@ static func wrap(c: CanvasItem, pos: Vector2, s: String, width: float, size: int
 
 static func icon(c: CanvasItem, key: String, center: Vector2, size: float, tint: Color = Color.WHITE) -> void:
 	var r: Rect2 = G.spr.get(key, Rect2())
+	if r.size.x <= 0.0:
+		r = G.spr.get(key + "_0", Rect2())
 	if r.size.x <= 0.0 or G.tex == null:
 		return
 	var aspect := r.size.y / r.size.x
-	var sz := Vector2(size, size * aspect)
+	var sz := Vector2(size, size * aspect) if aspect <= 1.0 else Vector2(size / aspect, size)
 	c.draw_texture_rect_region(G.tex, Rect2(center - sz * 0.5, sz), r, tint)
+
+static func pill(c: CanvasItem, center: Vector2, s: String, bg: Color, text_col: Color = Color.WHITE, size: int = 14) -> void:
+	var tw := G.body_font.get_string_size(s, HORIZONTAL_ALIGNMENT_CENTER, -1, size).x + 16.0
+	var h := float(size) + 10.0
+	panel(c, Rect2(center.x - tw * 0.5, center.y - h * 0.5, tw, h), bg, bg.darkened(0.25), int(h * 0.5), 1, 0)
+	text(c, Vector2(center.x - tw * 0.5, center.y + size * 0.35), s, size, text_col, HORIZONTAL_ALIGNMENT_CENTER, tw, 0, true)
+
+static func slider(c: CanvasItem, r: Rect2, ratio: float, fill_col: Color = Color("ffd43b"), active: bool = false, hov: float = 0.0) -> void:
+	bar(c, r, ratio, fill_col, Color(0.06, 0.09, 0.16, 0.88), int(r.size.y * 0.5))
+	var knob_x := r.position.x + 3.0 + (r.size.x - 6.0) * clampf(ratio, 0.0, 1.0)
+	var knob_y := r.position.y + r.size.y * 0.5
+	var r_outer := r.size.y * (0.8 if active else (0.65 + 0.06 * hov))
+	var r_inner := r.size.y * (0.62 if active else (0.5 + 0.05 * hov))
+	var base_kc := fill_col.lightened(0.25).lerp(Color("7af0dc"), hov * 0.4)
+	var kc := Color("ffd43b") if active else base_kc
+	c.draw_circle(Vector2(knob_x, knob_y), r_outer, Color("2a1810"))
+	c.draw_circle(Vector2(knob_x, knob_y), r_inner, kc)
 
 static func bar(c: CanvasItem, r: Rect2, ratio: float, fill: Color, back: Color = Color(0.08, 0.1, 0.16, 0.85), radius: int = 8) -> void:
 	c.draw_style_box(sb(back, Color(0.04, 0.05, 0.08, 0.95), radius, 2, 0), r)

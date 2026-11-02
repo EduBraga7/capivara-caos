@@ -2,8 +2,21 @@ extends Node
 ## Autoload "G": palette, language, persistent save, input map, shared helpers.
 
 signal language_changed
+signal achievement_unlocked(id: String, title: String, desc: String, icon: String)
 
 const SAVE_PATH := "user://capivara_caos_save.json"
+
+class ToastItem:
+	var id: String = ""
+	var title: String = ""
+	var desc: String = ""
+	var icon: String = "skull"
+	var t: float = 0.0
+
+var toast_queue: Array[ToastItem] = []
+var toast_cur: ToastItem = null
+var toast_canvas: CanvasLayer = null
+var toast_control: Control = null
 
 # ---- palette
 const OUT := Color("2a1810")
@@ -28,6 +41,7 @@ var body_font: Font
 var test_mode := false               # set by command line flags (--bot, --shots)
 var save_path: String = SAVE_PATH
 var ui_hold := false                 # tests: keep modals open for screenshots
+var is_gamepad: bool = false
 
 const TR := {
 	"title": ["CAPIVARA CAOS", "CAPYBARA CHAOS"],
@@ -54,6 +68,11 @@ const TR := {
 	"buy": ["COMPRAR", "BUY"],
 	"max": ["MÁXIMO", "MAX"],
 	"options_title": ["OPÇÕES", "OPTIONS"],
+	"achievements": ["CONQUISTAS", "ACHIEVEMENTS"],
+	"achievements_title": ["CONQUISTAS", "ACHIEVEMENTS"],
+	"achievements_sub": ["Suas glórias e momentos no Pantanal", "Your swamp glories and feats"],
+	"achievement_unlocked": ["CONQUISTA DESBLOQUEADA!", "ACHIEVEMENT UNLOCKED!"],
+	"ach_unlocked_stat": ["Desbloqueadas", "Unlocked"],
 	"master": ["Volume geral", "Master volume"],
 	"music": ["Música", "Music"],
 	"sfx": ["Efeitos", "Effects"],
@@ -135,6 +154,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_setup_inputs()
 	load_save()
+	_init_toast_layer()
 	for a in OS.get_cmdline_user_args():
 		if a == "--bot" or a.begins_with("--shots") or a == "--test":
 			test_mode = true
@@ -148,10 +168,106 @@ func _ready() -> void:
 	body_font = f2
 	apply_settings()
 
+class ToastDraw extends Control:
+	var g: Node
+	func _draw() -> void:
+		g._draw_toast(self)
+
+func _init_toast_layer() -> void:
+	toast_canvas = CanvasLayer.new()
+	toast_canvas.layer = 120
+	toast_control = ToastDraw.new()
+	toast_control.g = self
+	toast_control.set_anchors_preset(Control.PRESET_FULL_RECT)
+	toast_control.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	toast_canvas.add_child(toast_control)
+	add_child(toast_canvas)
+
+func _process(dt: float) -> void:
+	if toast_cur != null:
+		toast_cur.t += dt
+		if toast_cur.t >= 4.0:
+			toast_cur = null
+		if toast_control != null and is_instance_valid(toast_control):
+			toast_control.queue_redraw()
+	elif not toast_queue.is_empty():
+		toast_cur = toast_queue.pop_front()
+		toast_cur.t = 0.0
+		if has_node("/root/Sfx"):
+			get_node("/root/Sfx").play("milestone", -2.0)
+		if toast_control != null and is_instance_valid(toast_control):
+			toast_control.queue_redraw()
+
+func _draw_toast(c: Control) -> void:
+	if toast_cur == null:
+		return
+	var vs := c.size
+	var t := toast_cur.t
+	var k := 1.0
+	if t < 0.4:
+		k = Ui.ease_out_back(clampf(t / 0.4, 0.0, 1.0))
+	elif t > 3.6:
+		k = 1.0 - clampf((t - 3.6) / 0.4, 0.0, 1.0)
+	var tw := 340.0
+	var th := 74.0
+	var rx := vs.x - tw - 24.0
+	var ry := vs.y - th - 24.0 + (1.0 - k) * 90.0
+	var r := Rect2(rx, ry, tw, th)
+	Ui.panel(c, r, Color("101a2e"), Color("ffd43b"), 14, 3, 12)
+	var ic_center := Vector2(rx + 38, ry + th * 0.5)
+	c.draw_circle(ic_center, 24, Color(0.15, 0.25, 0.42, 0.85))
+	c.draw_arc(ic_center, 24, 0.0, TAU, 32, Color("ffd43b"), 2.0, true)
+	var is_wide := toast_cur.icon.begins_with("jacare") or toast_cur.icon.begins_with("onca")
+	Ui.icon(c, toast_cur.icon, ic_center, 40.0 if is_wide else 34.0)
+	Ui.text(c, Vector2(rx + 72, ry + 22), "🏆 " + T("achievement_unlocked"), 12, Color("ffd43b"), HORIZONTAL_ALIGNMENT_LEFT, tw - 80, 0, true)
+	Ui.text(c, Vector2(rx + 72, ry + 42), toast_cur.title, 16, Color("fff3dc"), HORIZONTAL_ALIGNMENT_LEFT, tw - 80, 0, true)
+	Ui.text(c, Vector2(rx + 72, ry + 60), toast_cur.desc, 12, Color("a8c0e8"), HORIZONTAL_ALIGNMENT_LEFT, tw - 80, 0, false)
+
+func _exit_tree() -> void:
+	title_font = null
+	body_font = null
+	tex = null
+	spr.clear()
+	spr_logic.clear()
+	Ui._cache.clear()
+	Ui._vignette = null
+	Ui._shade_h = null
+	toast_queue.clear()
+	toast_cur = null
+
+func _input(ev: InputEvent) -> void:
+	if ev is InputEventJoypadButton:
+		is_gamepad = true
+	elif ev is InputEventJoypadMotion and absf(ev.axis_value) > 0.4:
+		is_gamepad = true
+	elif ev is InputEventKey or (ev is InputEventMouseButton and ev.pressed):
+		is_gamepad = false
+
 func _unhandled_input(ev: InputEvent) -> void:
 	if ev is InputEventKey and ev.pressed and not ev.echo and ev.keycode == KEY_F11:
 		set_setting("fullscreen", not bool(data["settings"]["fullscreen"]))
 		apply_settings()
+
+func p_accept() -> String:
+	return "(A)" if is_gamepad else "[Enter]"
+
+func p_cancel() -> String:
+	return "(B)" if is_gamepad else "[Esc]"
+
+func p_reroll() -> String:
+	return "(Y)" if is_gamepad else "[R]"
+
+func p_dash() -> String:
+	return "(A / RB)" if is_gamepad else "[Espaço]"
+
+func p_nav() -> String:
+	return "(D-Pad)" if is_gamepad else "[WASD / Setas]"
+
+func hint_move_str() -> String:
+	return "(Analógico / D-Pad) para mover" if is_gamepad else L(["WASD / Setas: mover", "WASD / Arrows: move"])
+
+func hint_dash_str() -> String:
+	return "(A / RB): esquivar" if is_gamepad else L(["ESPAÇO / Shift: esquivar", "SPACE / Shift: dodge"])
 
 # ---------------------------------------------------------------- i18n
 func L(pair: Array) -> String:
@@ -208,8 +324,30 @@ func _default_data() -> Dictionary:
 		"runs": 0,
 		"wins": 0,
 		"seen_hint": 0,
+		"achievements": [],
 		"settings": {"master": 0.85, "music": 0.65, "sfx": 0.9, "shake": 1, "numbers": true, "flashes": true, "lang": -1, "difficulty": 1, "fullscreen": false},
 	}
+
+func has_achievement(id: String) -> bool:
+	return (data.get("achievements", []) as Array).has(id)
+
+func unlock_achievement(id: String) -> void:
+	if not Defs.ACHIEVEMENTS.has(id):
+		return
+	if not data.has("achievements") or not (data["achievements"] is Array):
+		data["achievements"] = []
+	if data["achievements"].has(id):
+		return
+	data["achievements"].append(id)
+	save()
+	var d: Dictionary = Defs.ACHIEVEMENTS[id]
+	var item := ToastItem.new()
+	item.id = id
+	item.title = L(d["name"])
+	item.desc = L(d["desc"])
+	item.icon = str(d.get("icon", "skull"))
+	toast_queue.append(item)
+	achievement_unlocked.emit(id, item.title, item.desc, item.icon)
 
 func load_save() -> void:
 	data = _default_data()

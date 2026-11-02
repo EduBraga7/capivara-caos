@@ -28,7 +28,7 @@ const SPRITES := [
 	["cheese", 34, 34, 1],
 	["bird", 48, 44, 2],
 	["mudball", 30, 30, 1],
-	["heart", 34, 34, 1],
+	["heart", 38, 38, 1],
 	["skull", 34, 34, 1],
 	["ic_orange", 60, 60, 1], ["ic_flipflop", 60, 60, 1], ["ic_cheese", 60, 60, 1], ["ic_repellent", 60, 60, 1],
 	["ic_thunder", 60, 60, 1], ["ic_mud", 60, 60, 1], ["ic_vuvuzela", 60, 60, 1], ["ic_birds", 60, 60, 1],
@@ -518,9 +518,9 @@ static func s_mudball(c: CanvasItem) -> void:
 	c.draw_circle(Vector2(3, 3), 1.2, Color("5a3a20"))
 
 static func s_heart(c: CanvasItem, k: float) -> void:
-	var pts := heart_pts(Vector2(0, 1), 20.0 * k)
+	var pts := heart_pts(Vector2(0, -2.2 * k), 15.5 * k)
 	poly(c, pts, Color("ff4d6d"), 2.0)
-	ell(c, Vector2(-5, -5) * k, 3.4 * k, 2.0 * k, Color(1, 1, 1, 0.8), -0.6)
+	ell(c, Vector2(-4.5, -4.5) * k, 3.2 * k, 1.9 * k, Color(1, 1, 1, 0.8), -0.6)
 
 static func s_skull(c: CanvasItem) -> void:
 	blob(c, Vector2(0, -2), 11.0, 10.0, Color("f1ede0"), 0.0, 1.8)
@@ -573,11 +573,50 @@ static func i_vuvuzela(c: CanvasItem) -> void:
 		c.draw_polyline(arc, Color(1, 1, 1, 0.85 - i * 0.2), 2.0, true)
 
 static func i_guarana(c: CanvasItem) -> void:
-	poly(c, PackedVector2Array([Vector2(0, -12), Vector2(10, -22), Vector2(14, -14)]), Color("5fbf3a"), 1.8)
-	blob(c, Vector2(0, 3), 17.0, 17.0, Color("e63946"), 0.0, 2.4)
-	c.draw_circle(Vector2(0, 5), 9.0, Color("f7f2e2"))
-	c.draw_circle(Vector2(1, 6), 5.2, Color("1a1010"))
-	c.draw_circle(Vector2(-0.5, 4), 1.6, WHITE)
+	# cold can of Guaraná soda (Lata de Guaraná)
+	# fizzy bubbles
+	c.draw_circle(Vector2(-18, -6), 1.5, Color(1, 1, 1, 0.5))
+	c.draw_circle(Vector2(-16, -14), 2.0, Color(1, 1, 1, 0.6))
+	c.draw_circle(Vector2(18, -10), 1.8, Color(1, 1, 1, 0.5))
+	c.draw_circle(Vector2(16, 2), 1.4, Color(1, 1, 1, 0.4))
+	# bottom silver rim
+	poly(c, PackedVector2Array([
+		Vector2(-13, 14), Vector2(13, 14),
+		Vector2(10, 19), Vector2(-10, 19)
+	]), Color("cbd5e1"), 1.8)
+	# main green can body
+	var body := PackedVector2Array([
+		Vector2(-14, -13),
+		Vector2(14, -13),
+		Vector2(14, 15),
+		Vector2(-14, 15)
+	])
+	poly(c, body, Color("1e824c"), 2.2)
+	# light shine vertical line on the left side
+	c.draw_line(Vector2(-9, -11), Vector2(-9, 13), Color(1, 1, 1, 0.3), 3.0, true)
+	# golden decorative dynamic curve across the can
+	c.draw_polyline(PackedVector2Array([
+		Vector2(-12, 7), Vector2(0, 1), Vector2(12, -5)
+	]), Color("ffd43b"), 2.8, true)
+	# red guaraná berry emblem on the center
+	c.draw_circle(Vector2(0, -1), 5.5, Color("e63946"))
+	c.draw_circle(Vector2(0, -1), 5.5, Color("2a1010"), false, 1.4)
+	# green leaf over the berry
+	poly(c, PackedVector2Array([Vector2(-1, -6), Vector2(4, -10), Vector2(5, -6)]), Color("48bb78"), 1.2)
+	# tiny highlight on the berry
+	c.draw_circle(Vector2(-1.5, -2.5), 1.2, Color.WHITE)
+	# top tapered silver neck
+	poly(c, PackedVector2Array([
+		Vector2(-14, -13), Vector2(14, -13),
+		Vector2(11, -18), Vector2(-11, -18)
+	]), Color("cbd5e1"), 1.8)
+	# silver top lid rim
+	poly(c, PackedVector2Array([
+		Vector2(-11, -18), Vector2(11, -18),
+		Vector2(10, -21), Vector2(-10, -21)
+	]), Color("e2e8f0"), 1.8)
+	# pull tab
+	c.draw_line(Vector2(-3, -19.5), Vector2(3, -20.5), Color("64748b"), 2.0, true)
 
 static func i_cafe(c: CanvasItem) -> void:
 	for i in 3:
@@ -590,11 +629,60 @@ static func i_cafe(c: CanvasItem) -> void:
 	flat(c, Vector2(0, 22), 20.0, 3.0, Color("d7d0c0"), 0.0, 1.6)
 
 static func i_tenis(c: CanvasItem) -> void:
-	poly(c, PackedVector2Array([Vector2(-22, 12), Vector2(-22, -6), Vector2(-9, -10), Vector2(-1, -17), Vector2(6, -12), Vector2(21, -1), Vector2(24, 12)]), Color("e63946"), 2.2)
-	poly(c, PackedVector2Array([Vector2(-23, 12), Vector2(25, 12), Vector2(25, 19), Vector2(-23, 19)]), Color("f7f7f7"), 2.0)
+	# speed lines behind heel
+	c.draw_line(Vector2(-26, 4), Vector2(-21, 4), Color(1, 1, 1, 0.45), 2.0, true)
+	c.draw_line(Vector2(-28, 9), Vector2(-22, 9), Color(1, 1, 1, 0.65), 2.2, true)
+	c.draw_line(Vector2(-25, 14), Vector2(-21, 14), Color(1, 1, 1, 0.45), 2.0, true)
+	# red canvas upper (classic sneaker profile)
+	var upper := PackedVector2Array([
+		Vector2(-21, 8),
+		Vector2(-21, 1),
+		Vector2(-18, -4),
+		Vector2(-14, -7),
+		Vector2(-7, -4),
+		Vector2(-3, -11),
+		Vector2(3, -10),
+		Vector2(9, -5),
+		Vector2(14, 0),
+		Vector2(17, 4),
+		Vector2(17, 8),
+		Vector2(-21, 8)
+	])
+	poly(c, upper, Color("e63946"), 2.2)
+	# ankle collar padding
+	c.draw_line(Vector2(-15, -6), Vector2(-7, -3), Color("f7f7f7"), 2.4, true)
+	# dynamic gold racing wave / stripe
+	c.draw_polyline(PackedVector2Array([Vector2(-14, 2), Vector2(-4, 5), Vector2(10, -1)]), Color("ffd43b"), 2.6, true)
 	for i in 3:
-		c.draw_line(Vector2(-2 + 5 * i, -11 + 3 * i), Vector2(1 + 5 * i, -6 + 3 * i), Color.WHITE, 2.0, true)
-	c.draw_line(Vector2(-18, 4), Vector2(14, 4), Color("ffd43b"), 2.2, true)
+		var lx := -1.0 + 5.5 * i
+		var ly := -8.0 + 3.8 * i
+		c.draw_line(Vector2(lx, ly), Vector2(lx + 4.2, ly + 2.0), Color("f7f7f7"), 2.2, true)
+		c.draw_circle(Vector2(lx, ly), 1.0, Color("3a1010"))
+		c.draw_circle(Vector2(lx + 4.2, ly + 2.0), 1.0, Color("3a1010"))
+
+	# white rubber toe cap
+	var toe := PackedVector2Array([
+		Vector2(14, 1),
+		Vector2(18, 2),
+		Vector2(21, 5),
+		Vector2(21, 8),
+		Vector2(14, 8)
+	])
+	poly(c, toe, Color("f7f7f7"), 1.8)
+	# white rubber sole (smooth curved toe rocker)
+	var sole := PackedVector2Array([
+		Vector2(-22, 8),
+		Vector2(16, 8),
+		Vector2(21, 8),
+		Vector2(21, 10),
+		Vector2(18, 13),
+		Vector2(10, 14),
+		Vector2(-20, 14),
+		Vector2(-22, 11)
+	])
+	poly(c, sole, Color("f7f7f7"), 2.0)
+	# dark racing pinstripe on the sole
+	c.draw_line(Vector2(-20, 11), Vector2(17, 10), Color("1a1015"), 1.8, true)
 
 static func i_marmita(c: CanvasItem) -> void:
 	curve(c, PackedVector2Array([Vector2(-8, -10), Vector2(-8, -18), Vector2(8, -18), Vector2(8, -10)]), 3.0, Color("c8c8d0"), 1.6)

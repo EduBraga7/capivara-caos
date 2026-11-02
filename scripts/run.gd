@@ -71,6 +71,7 @@ var zoom_target: float = 1.0
 var view := Vector2(1280, 720)
 var real_dt: float = 0.016
 var time_alive: float = 0.0
+var unpause_cooldown: float = 0.0
 
 # bot state
 var bot_move := Vector2.ZERO
@@ -206,6 +207,9 @@ func debug_ui(kind: String) -> void:
 			open_chest(2)
 		"pause":
 			set_paused()
+		"options":
+			set_paused()
+			hud._open_options()
 		"over":
 			player.hp = 0.0
 			player_down()
@@ -278,8 +282,10 @@ func _process(delta: float) -> void:
 	elif slowmo_t > 0.0:
 		slowmo_t -= dt
 		sim_dt = dt * slowmo_scale
+	if unpause_cooldown > 0.0:
+		unpause_cooldown = maxf(0.0, unpause_cooldown - delta)
 	if state == S.PLAY:
-		if not demo and Input.is_action_just_pressed("pause"):
+		if not demo and unpause_cooldown <= 0.0 and Input.is_action_just_pressed("pause"):
 			set_paused()
 		else:
 			var steps := sim_steps if fixed_dt > 0.0 else 1
@@ -313,10 +319,17 @@ func _sim(dt: float) -> void:
 			player.try_dash()
 	else:
 		input = Input.get_vector("move_left", "move_right", "move_up", "move_down")
-		if Input.is_action_just_pressed("dash"):
+		if unpause_cooldown <= 0.0 and Input.is_action_just_pressed("dash"):
 			player.try_dash()
 	player.update(dt, input)
 	player.in_water = world.water_at(player.position)
+	if not demo:
+		if t >= 180.0:
+			G.unlock_achievement("survive_3")
+		if t >= 360.0:
+			G.unlock_achievement("survive_6")
+		if t >= 600.0:
+			G.unlock_achievement("survive_10")
 	world.update(dt)
 	_timeline(dt)
 	en.update(dt)
@@ -507,6 +520,8 @@ func on_kill(e: Enemy, silent: bool = false) -> void:
 	if silent:
 		return
 	kills += 1
+	if not demo:
+		G.unlock_achievement("first_blood")
 	var col: Color = KILL_COL.get(e.id, Color("c0c0c0"))
 	if not silent:
 		fx.burst(e.pos, col, 7 if not e.big else 40, 190.0 if not e.big else 480.0, 0.45, 3.2)
@@ -539,6 +554,13 @@ func on_kill(e: Enemy, silent: bool = false) -> void:
 		for i in 14:
 			pk.drop_coin(e.pos, 1.0)
 		boss_alive = false
+		if not demo:
+			if e.id == "jacare":
+				G.unlock_achievement("boss_jacare")
+			elif e.id == "onca":
+				G.unlock_achievement("boss_onca")
+			elif e.id == "sucuri" or e.boss:
+				G.unlock_achievement("boss_sucuri")
 		if e.boss or e.id == "sucuri":
 			zoom_target = 1.0
 			_victory()
@@ -551,6 +573,8 @@ func on_kill(e: Enemy, silent: bool = false) -> void:
 		milestone_idx += 1
 
 func _victory() -> void:
+	if not demo and diff >= 2:
+		G.unlock_achievement("win_chaos")
 	pending_levels = 0
 	en.melt_all()
 	fx.confetti(player.position, 60)
@@ -578,6 +602,8 @@ func perfect_dodge(e: Enemy) -> void:
 		return
 	last_dodge_t = t
 	stat_dodges += 1
+	if not demo:
+		G.unlock_achievement("perfect_dodge")
 	slowmo(0.55, 0.3)
 	fx.ring(player.position, 10.0, 230.0, 0.45, Color(0.4, 0.9, 1.0, 0.9), 5.0)
 	fx.glow_burst(player.position, Color(0.4, 0.9, 1.0, 0.8), 6, 180.0)
@@ -629,6 +655,8 @@ func add_xp(v: float) -> void:
 		xp_need = Defs.xp_need(level)
 		pending_levels += 1
 		leveled = true
+		if not demo and level >= 20:
+			G.unlock_achievement("level_20")
 	if leveled and state == S.PLAY and not demo and not player.dead:
 		_begin_levelup()
 	elif leveled and demo:
@@ -654,6 +682,8 @@ func choose(c: Dictionary) -> void:
 	pending_levels -= 1
 	Sfx.muffle(false)
 	state = S.PLAY
+	unpause_cooldown = 0.2
+	Input.action_release("dash")
 	if pending_levels > 0:
 		_begin_levelup()
 
@@ -675,6 +705,8 @@ func get_weapon(id: String) -> Weapon:
 func add_weapon(id: String) -> Weapon:
 	var w := Weapons.create(self, id)
 	weapons.append(w)
+	if not demo and weapons.size() >= 6:
+		G.unlock_achievement("arsenal")
 	return w
 
 func add_passive(id: String) -> void:
@@ -826,6 +858,14 @@ func apply_choice(c: Dictionary) -> void:
 			fx.confetti(player.position, 50)
 			fx.flash(0.6, Color(1, 0.9, 1))
 			Sfx.play("evolve")
+			if not demo:
+				G.unlock_achievement("first_evo")
+				var ev_cnt := 0
+				for wep in weapons:
+					if wep.evolved:
+						ev_cnt += 1
+				if ev_cnt >= 3:
+					G.unlock_achievement("triple_evo")
 		"heal":
 			player.heal(player.max_hp * 0.4)
 		"coins":
@@ -859,6 +899,8 @@ func take_chest() -> void:
 	chest_rewards.clear()
 	Sfx.muffle(false)
 	state = S.PLAY
+	unpause_cooldown = 0.2
+	Input.action_release("dash")
 
 # ------------------------------------------------------------- flow control
 func set_paused() -> void:
@@ -872,6 +914,9 @@ func resume() -> void:
 	if state == S.PAUSE:
 		state = S.PLAY
 		Sfx.muffle(false)
+		unpause_cooldown = 0.2
+		Input.action_release("pause")
+		Input.action_release("dash")
 
 func continue_endless() -> void:
 	endless = true
@@ -882,6 +927,8 @@ func continue_endless() -> void:
 	next_endless_event = t + 8.0
 	Sfx.music("battle")
 	boss_alive = false
+	unpause_cooldown = 0.2
+	Input.action_release("dash")
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT and state == S.PLAY and not demo and not G.test_mode:
@@ -903,9 +950,20 @@ func _result(victory: bool) -> Dictionary:
 		G.data["best_time"] = maxf(best_before, t)
 		G.data["best_kills"] = maxi(int(G.data["best_kills"]), kills)
 		G.data["best_level"] = maxi(int(G.data["best_level"]), level)
+		if int(G.data["coins"]) >= 1000:
+			G.unlock_achievement("coins_1000")
 		G.save()
 	return {"time": t, "kills": kills, "level": level, "coins": earned, "victory": victory, "record": record, "dodges": stat_dodges, "damage": stat_damage, "char": char_id}
 
 func request_finish(action: String) -> void:
 	Sfx.muffle(false)
 	finished.emit(action)
+
+func _exit_tree() -> void:
+	if pj != null:
+		pj.clear()
+	for w in weapons:
+		if w is Weapons.WCheese:
+			(w as Weapons.WCheese).procs.clear()
+		w.run = null
+	weapons.clear()

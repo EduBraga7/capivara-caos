@@ -28,6 +28,8 @@ func make(kind: int) -> Proj:
 	return p
 
 func clear() -> void:
+	for p in list:
+		p.w = null
 	list.clear()
 
 # ----------------------------------------------------------------- update

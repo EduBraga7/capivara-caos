@@ -225,6 +225,97 @@ const EVENTS := [
 
 const ELITE_TIMES := [110.0, 195.0, 265.0, 340.0, 405.0, 480.0, 545.0]
 
+# ----------------------------------------------------------- achievements
+const ACHIEVEMENTS := {
+	"first_blood": {
+		"name": ["Primeiro Mosquito", "First Blood"],
+		"desc": ["Derrote seu primeiro bicho.", "Defeat your very first critter."],
+		"icon": "skull"
+	},
+	"survive_3": {
+		"name": ["Hora do Lanche", "Snack Time"],
+		"desc": ["Sobreviva por 3 minutos.", "Survive for 3 minutes."],
+		"icon": "ic_marmita"
+	},
+	"survive_6": {
+		"name": ["Entardecer no Pantanal", "Pantanal Sunset"],
+		"desc": ["Sobreviva por 6 minutos.", "Survive for 6 minutes."],
+		"icon": "ic_cafe"
+	},
+	"survive_10": {
+		"name": ["Sobrevivente Raiz", "True Survivor"],
+		"desc": ["Chegue até a noite (10 minutos).", "Reach nightfall (10 minutes)."],
+		"icon": "ic_coco"
+	},
+	"perfect_dodge": {
+		"name": ["No Limite", "Near Miss"],
+		"desc": ["Execute uma Esquiva Perfeita.", "Perform a Perfect Dodge."],
+		"icon": "ic_tenis"
+	},
+	"spa_day": {
+		"name": ["Dia de Spa", "Spa Day"],
+		"desc": ["Regenere 40 de vida dentro da água numa partida.", "Regenerate 40 HP in water during one run."],
+		"icon": "lily"
+	},
+	"first_evo": {
+		"name": ["Evolução Pantaneira", "Pantanal Evolution"],
+		"desc": ["Evolua uma arma no baú.", "Evolve any weapon using a chest."],
+		"icon": "bau"
+	},
+	"boss_jacare": {
+		"name": ["Jacaré Rabugento", "Grumpy Caiman"],
+		"desc": ["Derrote o Jacaré aos 3 minutos.", "Defeat the Caiman at 3 minutes."],
+		"icon": "jacare_0"
+	},
+	"boss_onca": {
+		"name": ["Gato Grande", "Big Cat"],
+		"desc": ["Derrote a Onça-Pintada aos 6 minutos.", "Defeat the Jaguar at 6 minutes."],
+		"icon": "onca_0"
+	},
+	"boss_sucuri": {
+		"name": ["Rainha do Pantanal", "Queen of the Swamp"],
+		"desc": ["Derrote a Sucuri Gigante e vença o jogo!", "Defeat the Giant Anaconda and win the game!"],
+		"icon": "ic_orange"
+	},
+	"win_chaos": {
+		"name": ["Mestre do Caos", "Chaos Master"],
+		"desc": ["Vença uma partida na dificuldade Caos.", "Win a run on Chaos difficulty."],
+		"icon": "rojao"
+	},
+	"arsenal": {
+		"name": ["Arsenal Completo", "Full Arsenal"],
+		"desc": ["Carregue 6 armas ao mesmo tempo.", "Hold 6 weapons simultaneously."],
+		"icon": "ic_vuvuzela"
+	},
+	"triple_evo": {
+		"name": ["Poder Absoluto", "Absolute Power"],
+		"desc": ["Tenha 3 armas evoluídas na mesma partida.", "Have 3 evolved weapons in a single run."],
+		"icon": "ic_thunder"
+	},
+	"level_20": {
+		"name": ["Capivara Universitária", "College Capy"],
+		"desc": ["Alcance o nível 20 numa partida.", "Reach level 20 in a single run."],
+		"icon": "ic_cursinho"
+	},
+	"coins_1000": {
+		"name": ["Economia Capivara", "Capy Economy"],
+		"desc": ["Acumule 1.000 moedas no banco.", "Accumulate 1,000 coins in the bank."],
+		"icon": "ic_cofrinho"
+	},
+	"unlock_all": {
+		"name": ["Família Reunida", "Family Reunion"],
+		"desc": ["Desbloqueie todas as 5 capivaras.", "Unlock all 5 capybaras."],
+		"icon": "heart"
+	},
+}
+
+const ACHIEVEMENT_ORDER := [
+	"first_blood", "perfect_dodge", "survive_3", "boss_jacare",
+	"survive_6", "boss_onca", "survive_10", "boss_sucuri",
+	"spa_day", "first_evo", "arsenal", "triple_evo",
+	"level_20", "win_chaos", "coins_1000", "unlock_all"
+]
+
 # ---------------------------------------------------------------- helpers
 static func xp_need(level: int) -> float:
 	var l := float(level - 1)
