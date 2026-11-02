@@ -2,7 +2,7 @@
   <img src="icon.png" width="110" alt="Capivara Caos">
 </p>
 
-<h1 align="center">🦫 CAPIVARA CAOS</h1>
+<h1 align="center">CAPIVARA CAOS</h1>
 <p align="center"><i>ela só queria relaxar</i></p>
 
 <p align="center">
