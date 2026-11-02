@@ -20,8 +20,10 @@ var lp_sfx := 0
 var lp_music := 0
 var _fade: Tween
 var _interacted := false
+var mute_gameplay := false
 
-const MIN_GAP_MS := {"hit": 45, "kill": 30, "gem": 20, "zap": 60, "pop": 25, "swish": 80, "tweet": 90, "stink": 120, "thud": 70, "coin": 40}
+const UI_SOUNDS := ["ui_click", "ui_hover", "levelup", "hurt", "milestone"]
+const MIN_GAP_MS := {"hit": 45, "kill": 30, "gem": 20, "zap": 60, "pop": 25, "swish": 80, "tweet": 90, "stink": 120, "thud": 70, "coin": 40, "ui_hover": 75, "ui_click": 50}
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -85,6 +87,8 @@ func muffle(on: bool) -> void:
 	AudioServer.set_bus_effect_enabled(lp_music, 0, on)
 
 func play(name: String, vol_db: float = 0.0, pitch: float = 1.0, jitter: float = 0.06) -> void:
+	if mute_gameplay and not UI_SOUNDS.has(name):
+		return
 	if not streams.has(name):
 		return
 	var now := Time.get_ticks_msec()

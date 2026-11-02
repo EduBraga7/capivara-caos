@@ -162,6 +162,7 @@ func _ready() -> void:
 # ----------------------------------------------------------------- flow
 func show_title() -> void:
 	_clear_all()
+	Sfx.mute_gameplay = true
 	demo_run = Run.new()
 	demo_run.demo = true
 	demo_run.char_id = G.data["selected"] if G.is_unlocked(G.data["selected"]) else "cap"
@@ -191,6 +192,7 @@ func _on_start(cid: String) -> void:
 
 func _begin_run(cid: String) -> void:
 	_clear_all()
+	Sfx.mute_gameplay = false
 	run = Run.new()
 	run.char_id = cid
 	run.finished.connect(_on_finished)

@@ -68,6 +68,8 @@ func _go(p: int) -> void:
 	_layout()
 	if demo_run != null:
 		demo_run.cam_bias = Vector2(-250, 10) if p == P.MAIN else Vector2.ZERO
+		demo_run.process_mode = Node.PROCESS_MODE_INHERIT if p == P.MAIN else Node.PROCESS_MODE_DISABLED
+		demo_run.visible = (p == P.MAIN)
 
 func _add(text: String, rect: Rect2, cb: Callable, kind: int = 1, enabled: bool = true) -> Btn:
 	var b := Btn.new()
